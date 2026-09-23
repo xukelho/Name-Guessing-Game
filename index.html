@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fffaf0">
+    <title>Jogo de Adivinhar Nomes</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./game.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="intro">
+        <p class="eyebrow">Um pequeno desafio de letras</p>
+        <h1>Jogo de Adivinhar Nomes</h1>
+        <p class="instructions">Descobre o nome, uma letra de cada vez. Uma letra errada reinicia o progresso.</p>
+      </header>
+
+      <section id="game" class="game-panel" aria-labelledby="level-heading">
+        <h2 id="level-heading" class="level-heading" tabindex="-1">Nível 1 de 3</h2>
+        <ol id="answer-slots" class="answer-slots" aria-label="Letras descobertas"></ol>
+        <div id="letter-grid" class="letter-grid" aria-label="Letras disponíveis"></div>
+      </section>
+
+      <section id="final-result" class="final-result" aria-labelledby="final-heading" hidden>
+        <p class="final-sparkle" aria-hidden="true">✦</p>
+        <h2 id="final-heading">Miguel Machado Coelho</h2>
+        <p>Parabens! Conseguiste descubrir o nome</p>
+        <button id="replay" class="replay-button" type="button">Jogar novamente</button>
+      </section>
+
+      <p id="game-status" class="game-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </main>
+    <canvas id="fireworks" class="fireworks" aria-hidden="true"></canvas>
+  </body>
+</html>
