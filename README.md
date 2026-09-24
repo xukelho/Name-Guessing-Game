@@ -1,8 +1,10 @@
 # Jogo de Adivinhar Nomes
 
-Um pequeno jogo de navegador em que descobres **COELHO**, **MACHADO** e **MIGUEL**, uma letra de cada vez. Escolhe as letras pela ordem certa. Uma escolha errada apaga as letras descobertas nesse nível.
+[Jogar online](https://xukelho.github.io/Name-Guessing-Game/)
 
-Antes de abrir o jogo, existe uma barreira de tempo. O desafio fica disponível em **25 de novembro de 2026, às 21:30 (hora de Lisboa)** e não tem data de encerramento nem limite de tempo durante a partida. A abertura é confirmada exclusivamente através de uma nova consulta HTTPS ao serviço [UTCTime](https://utctime.app/api/timezone/Etc/UTC), usando a compatibilidade com o formato do WorldTimeAPI; não depende do relógio do dispositivo nem guarda uma autorização local. Cada carregamento da página faz uma verificação nova.
+Um pequeno jogo de navegador em que descobres o nome real do bebé Matias, uma letra de cada vez. Escolhe as letras pela ordem certa. Uma escolha errada apaga as letras descobertas nesse nível.
+
+Antes de abrir o jogo, existe uma barreira de tempo. Não tem data de encerramento nem limite de tempo durante a partida. A abertura é confirmada exclusivamente através de uma nova consulta HTTPS ao serviço [UTCTime](https://utctime.app/api/timezone/Etc/UTC), usando a compatibilidade com o formato do WorldTimeAPI; não depende do relógio do dispositivo nem guarda uma autorização local. Cada carregamento da página faz uma verificação nova.
 
 O jogo usa HTML, CSS e JavaScript simples. Não precisa de servidor de aplicações, contas, som, compilação, chaves ou dependências instaladas. A consulta externa tem um limite de 10 segundos; se falhar, o jogo permanece bloqueado e tenta novamente 5 segundos depois de a tentativa terminar. Também é possível usar o botão **Tentar novamente**. Sem internet ou sem acesso do navegador ao serviço de hora, não há abertura offline. Como o site é estático, o código e as respostas continuam visíveis para quem descarregar os ficheiros; a barreira é uma funcionalidade de apresentação, não um mecanismo de segredo.
 
