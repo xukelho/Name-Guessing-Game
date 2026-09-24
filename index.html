@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#fffaf0">
     <title>Jogo de Adivinhar Nomes</title>
     <link rel="stylesheet" href="./styles.css">
+    <script src="./timegate.js" defer></script>
     <script src="./game.js" defer></script>
   </head>
   <body>
@@ -13,10 +14,24 @@
       <header class="intro">
         <p class="eyebrow">Um pequeno desafio de letras</p>
         <h1>Jogo de Adivinhar Nomes</h1>
-        <p class="instructions">Descobre o nome, uma letra de cada vez. Uma letra errada reinicia o progresso.</p>
+        <p id="instructions" class="instructions" hidden>Descobre o nome, uma letra de cada vez. Uma letra errada reinicia o progresso.</p>
       </header>
 
-      <section id="game" class="game-panel" aria-labelledby="level-heading">
+      <section id="timegate" class="game-panel timegate-panel" aria-labelledby="timegate-heading">
+        <h2 id="timegate-heading" class="timegate-heading">O desafio começa em</h2>
+        <div class="countdown" aria-label="Tempo restante">
+          <div class="countdown-unit"><span id="countdown-days" aria-hidden="true">--</span><span>Dias</span></div>
+          <div class="countdown-unit"><span id="countdown-hours" aria-hidden="true">--</span><span>Horas</span></div>
+          <div class="countdown-unit"><span id="countdown-minutes" aria-hidden="true">--</span><span>Minutos</span></div>
+          <div class="countdown-unit"><span id="countdown-seconds" aria-hidden="true">--</span><span>Segundos</span></div>
+        </div>
+        <p class="timegate-date">Disponível a partir de 25 de novembro de 2026, às 21:30 (hora de Lisboa).</p>
+        <p id="timegate-status" class="timegate-status" role="status" aria-live="polite" aria-atomic="true">A verificar a hora…</p>
+        <button id="timegate-retry" class="replay-button" type="button" hidden>Tentar novamente</button>
+        <noscript><p class="timegate-noscript">Ativa o JavaScript para verificar a hora e iniciar o jogo.</p></noscript>
+      </section>
+
+      <section id="game" class="game-panel" aria-labelledby="level-heading" hidden>
         <h2 id="level-heading" class="level-heading" tabindex="-1">Nível 1 de 3</h2>
         <ol id="answer-slots" class="answer-slots" aria-label="Letras descobertas"></ol>
         <div id="letter-grid" class="letter-grid" aria-label="Letras disponíveis"></div>
@@ -31,6 +46,6 @@
 
       <p id="game-status" class="game-status" role="status" aria-live="polite" aria-atomic="true"></p>
     </main>
-    <canvas id="fireworks" class="fireworks" aria-hidden="true"></canvas>
+    <canvas id="fireworks" class="fireworks" aria-hidden="true" hidden></canvas>
   </body>
 </html>

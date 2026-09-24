@@ -62,6 +62,16 @@
   const gridElement = doc.getElementById("letter-grid");
   const slotsElement = doc.getElementById("answer-slots");
   const levelHeading = doc.getElementById("level-heading");
+  const instructionsElement = doc.getElementById("instructions");
+  const timegateElement = doc.getElementById("timegate");
+  const timegateStatusElement = doc.getElementById("timegate-status");
+  const timegateRetryButton = doc.getElementById("timegate-retry");
+  const countdownElements = [
+    doc.getElementById("countdown-days"),
+    doc.getElementById("countdown-hours"),
+    doc.getElementById("countdown-minutes"),
+    doc.getElementById("countdown-seconds")
+  ];
   const gameElement = doc.getElementById("game");
   const finalElement = doc.getElementById("final-result");
   const statusElement = doc.getElementById("game-status");
@@ -70,7 +80,8 @@
   const context = canvas.getContext("2d");
   const reduceMotion = root.matchMedia("(prefers-reduced-motion: reduce)");
 
-  let state = createGame();
+  let state = null;
+  let gameStarted = false;
   let inputLocked = false;
   let gameGeneration = 0;
   let timers = new Set();
@@ -99,6 +110,21 @@
   }
 
   function announce(message) { statusElement.textContent = message; }
+
+  function startGame() {
+    if (gameStarted) return;
+    gameStarted = true;
+    state = createGame();
+    instructionsElement.hidden = false;
+    timegateElement.hidden = true;
+    gameElement.hidden = false;
+    finalElement.hidden = true;
+    canvas.hidden = false;
+    root.addEventListener("resize", resizeCanvas);
+    render();
+    announce("Descobre o nome, uma letra de cada vez.");
+    levelHeading.focus();
+  }
 
   function render() {
     const level = LEVELS[state.levelIndex];
@@ -288,6 +314,7 @@
   }
 
   replayButton.addEventListener("click", () => {
+    if (!gameStarted) return;
     gameGeneration += 1;
     clearEffects();
     state = replay();
@@ -296,6 +323,57 @@
     focusAvailableTile();
   });
 
-  root.addEventListener("resize", resizeCanvas);
-  render();
+  function renderTimegate(snapshot) {
+    if (snapshot.state === "unlocked") {
+      timegateElement.hidden = true;
+      startGame();
+      return;
+    }
+
+    timegateElement.hidden = false;
+    const values = snapshot.formatted
+      ? [snapshot.formatted.days, snapshot.formatted.hours, snapshot.formatted.minutes, snapshot.formatted.seconds]
+      : ["--", "--", "--", "--"];
+    const labels = ["Dias", "Horas", "Minutos", "Segundos"];
+    values.forEach((value, index) => {
+      const display = String(value).padStart(2, "0");
+      countdownElements[index].textContent = display;
+      countdownElements[index].parentElement.setAttribute("aria-label", `${display} ${labels[index]}`);
+    });
+    timegateRetryButton.hidden = snapshot.state !== "retrying";
+    timegateRetryButton.disabled = snapshot.state === "checking";
+    if (snapshot.state === "retrying") {
+      if (!renderTimegate.failureAnnounced) {
+        timegateStatusElement.textContent = "Não foi possível verificar a hora. Vamos tentar novamente dentro de instantes.";
+        renderTimegate.failureAnnounced = true;
+      }
+    } else if (snapshot.state === "checking") {
+      if (!renderTimegate.failureAnnounced || snapshot.remainingSeconds === 0) {
+        timegateStatusElement.textContent = "A verificar a hora…";
+      }
+    } else if (snapshot.state === "countdown") {
+      timegateStatusElement.textContent = "";
+    }
+  }
+
+  if (!root.NameGameTimegate || typeof root.NameGameTimegate.createTimegate !== "function") {
+    timegateStatusElement.textContent = "Não foi possível verificar a hora. Vamos tentar novamente dentro de instantes.";
+    timegateRetryButton.hidden = true;
+  } else {
+    const timegate = root.NameGameTimegate.createTimegate({
+      fetch: root.fetch && root.fetch.bind(root),
+      monotonicNow: () => root.performance.now(),
+      setTimeout: root.setTimeout.bind(root),
+      clearTimeout: root.clearTimeout.bind(root),
+      AbortController: root.AbortController,
+      visibilityTarget: doc,
+      pageTarget: root
+    });
+    timegateRetryButton.addEventListener("click", () => {
+      renderTimegate.failureAnnounced = false;
+      timegate.refresh();
+    });
+    timegate.subscribe(renderTimegate);
+    timegate.start();
+  }
 })(typeof window === "object" ? window : null);

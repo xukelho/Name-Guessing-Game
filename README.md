@@ -2,15 +2,21 @@
 
 Um pequeno jogo de navegador em que descobres **COELHO**, **MACHADO** e **MIGUEL**, uma letra de cada vez. Escolhe as letras pela ordem certa. Uma escolha errada apaga as letras descobertas nesse nível.
 
-O jogo usa HTML, CSS e JavaScript simples. Não precisa de servidor de aplicações, contas, som, compilação nem dependências externas. O progresso só fica guardado enquanto a página está aberta; ao recarregá-la, o jogo começa no nível 1.
+Antes de abrir o jogo, existe uma barreira de tempo. O desafio fica disponível em **25 de novembro de 2026, às 21:30 (hora de Lisboa)** e não tem data de encerramento nem limite de tempo durante a partida. A abertura é confirmada exclusivamente através de uma nova consulta HTTPS ao serviço [WorldTimeAPI](https://worldtimeapi.org/api/timezone/Etc/UTC); não depende do relógio do dispositivo nem guarda uma autorização local. Cada carregamento da página faz uma verificação nova.
+
+O jogo usa HTML, CSS e JavaScript simples. Não precisa de servidor de aplicações, contas, som, compilação, chaves ou dependências instaladas. A consulta externa tem um limite de 10 segundos; se falhar, o jogo permanece bloqueado e tenta novamente 5 segundos depois de a tentativa terminar. Também é possível usar o botão **Tentar novamente**. Sem internet ou sem acesso do navegador ao serviço de hora, não há abertura offline. Como o site é estático, o código e as respostas continuam visíveis para quem descarregar os ficheiros; a barreira é uma funcionalidade de apresentação, não um mecanismo de segredo.
+
+O progresso só fica guardado enquanto a página está aberta; ao recarregá-la, o jogo começa no nível 1 depois de uma nova verificação de hora.
 
 ## Executar localmente
 
-Abre o ficheiro `index.html` num navegador. Para executar os testes das regras, instala o Node.js e corre:
+Abre o ficheiro `index.html` num navegador com acesso à internet e permissão para o navegador consultar o serviço de hora. Para executar os testes das regras locais, instala o Node.js e corre:
 
 ```sh
-node --test game.test.js
+node --test game.test.js timegate.test.js
 ```
+
+Os testes locais não precisam de internet porque usam respostas, relógios e agendadores controlados. Nesta cópia do trabalho, `timegate.test.js` ainda não foi criado porque os testes automatizados pertencem ao fluxo do Tester; o teste existente pode ser executado isoladamente com `node --test game.test.js`.
 
 ## Publicar com GitHub Pages
 
@@ -20,4 +26,4 @@ Não foi presumido nem verificado qual é o ramo predefinido do repositório ou 
 
 ## Validação
 
-`node --test game.test.js` executa os testes das regras do jogo. A página e os dois ficheiros locais foram servidos com resposta HTTP 200 por um servidor estático local. Não foi possível verificar o jogo visualmente num navegador (partida completa, teclado, movimento reduzido e layout a 320 px), porque não havia um navegador ligado durante a implementação. A publicação no GitHub Pages também não foi verificada.
+`node --test game.test.js timegate.test.js` é o comando completo previsto para os testes das regras do jogo e da barreira de tempo. A consulta HTTPS ao serviço externo, a atualização da contagem decrescente, a recuperação de uma aba e a abertura confirmada devem ser verificadas a partir do URL real do GitHub Pages antes de publicar; essa validação de origem/CORS e frescura não foi feita nesta implementação. Também não foi feita uma verificação visual completa num navegador (partida, teclado, movimento reduzido e layout a 320 px), nem foi verificada a publicação no GitHub Pages.

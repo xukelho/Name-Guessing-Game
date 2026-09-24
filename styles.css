@@ -12,6 +12,7 @@
 }
 
 * { box-sizing: border-box; }
+*[hidden] { display: none !important; }
 
 body {
   min-width: 320px;
@@ -46,6 +47,16 @@ h1 { margin: 0; font-size: clamp(2rem, 8vw, 3.1rem); line-height: 1.08; letter-s
   box-shadow: 0 1rem 2.5rem rgb(72 58 28 / 9%);
   text-align: center;
 }
+
+.timegate-heading { margin: 0; color: #6752ba; font-size: clamp(1.35rem, 5vw, 1.8rem); line-height: 1.15; }
+.countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(.3rem, 2vw, .7rem); margin: 1.5rem auto 1.25rem; }
+.countdown-unit { min-width: 0; padding: .65rem .2rem .55rem; border-radius: .8rem; background: #f7f5fc; color: #34245f; }
+.countdown-unit > span:first-child { display: block; font-size: clamp(1.35rem, 7vw, 2.2rem); font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; }
+.countdown-unit > span:last-child { display: block; margin-top: .35rem; color: var(--muted); font-size: clamp(.6rem, 2.4vw, .76rem); font-weight: 800; }
+.timegate-date { margin: 0 auto; color: var(--muted); font-size: clamp(.82rem, 2.8vw, .95rem); line-height: 1.45; }
+.timegate-status, .timegate-noscript { min-height: 1.5em; margin: 1rem auto 0; color: #39455b; font-weight: 700; line-height: 1.4; }
+.timegate-status:empty { min-height: 1.5em; }
+.timegate-panel .replay-button { margin-top: .8rem; }
 
 .level-heading { margin: 0 0 1.25rem; color: #6752ba; font-size: 1rem; font-weight: 800; letter-spacing: .04em; }
 .level-heading:focus { outline: none; }
