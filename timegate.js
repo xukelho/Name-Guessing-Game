@@ -31,6 +31,7 @@
     const AbortControllerClass = options.AbortController || (root && root.AbortController);
     const visibilityTarget = options.visibilityTarget || null;
     const pageTarget = options.pageTarget || null;
+    const logger = options.logger || (root && root.console ? root.console : null);
     const listeners = new Set();
 
     let state = "checking";
@@ -44,6 +45,22 @@
     let periodicTimer = null;
     let sample = null;
     let unlockedNotified = false;
+
+    function log(level, message, details, error) {
+      if (!logger || typeof logger[level] !== "function") return;
+      logger[level]("[timegate]", message, details, error || "");
+    }
+
+    function requestDetails(request) {
+      return {
+        endpoint: TIME_ENDPOINT,
+        reason: request.reason,
+        elapsedMs: Math.max(0, Math.round(monotonicNow() - request.startedAt)),
+        pageOrigin: root && root.location ? root.location.origin : undefined,
+        online: root && root.navigator ? root.navigator.onLine : undefined,
+        responseStatus: request.responseStatus
+      };
+    }
 
     function isVisible() {
       return !visibilityTarget || visibilityTarget.visibilityState !== "hidden";
@@ -86,7 +103,7 @@
       if (nextFormatted.totalSeconds === 0) {
         clearTimer("countdown");
         emit("checking", 0, formatRemaining(0));
-        requestVerification();
+        requestVerification("release-boundary");
         return;
       }
       if (isVisible()) {
@@ -108,7 +125,7 @@
       if (disposed || state !== "countdown" || !sample || !isVisible()) return;
       periodicTimer = schedule(() => {
         periodicTimer = null;
-        requestVerification();
+        requestVerification("periodic");
       }, REFRESH_INTERVAL_MS);
     }
 
@@ -116,7 +133,7 @@
       clearTimer("retry");
       retryTimer = schedule(() => {
         retryTimer = null;
-        requestVerification();
+        requestVerification("retry");
       }, RETRY_DELAY_MS);
     }
 
@@ -128,15 +145,24 @@
 
     function parseExternalTime(response) {
       if (!response || (typeof response.ok === "boolean" ? !response.ok : !(response.status >= 200 && response.status < 300))) {
-        throw new Error("A resposta do serviço de hora não foi bem-sucedida.");
+        const error = new Error("A resposta do serviço de hora não foi bem-sucedida.");
+        error.code = "HTTP_STATUS";
+        if (response && Number.isFinite(response.status)) error.status = response.status;
+        throw error;
       }
       return Promise.resolve().then(() => response.json()).then((body) => {
         const value = body && body.utc_datetime;
         if (typeof value !== "string" || !/(?:Z|[+]00:00)$/.test(value)) {
-          throw new Error("A resposta não contém uma hora UTC válida.");
+          const error = new Error("A resposta não contém uma hora UTC válida.");
+          error.code = "INVALID_UTC_DATETIME";
+          throw error;
         }
         const externalMs = Date.parse(value);
-        if (!Number.isFinite(externalMs)) throw new Error("A resposta não contém uma hora UTC válida.");
+        if (!Number.isFinite(externalMs)) {
+          const error = new Error("A resposta não contém uma hora UTC válida.");
+          error.code = "INVALID_UTC_DATETIME";
+          throw error;
+        }
         return externalMs;
       });
     }
@@ -148,6 +174,12 @@
       if (disposed || request.superseded) return;
 
       if (error) {
+        log("warn", "verification failed", {
+          ...requestDetails(request),
+          errorCode: error.code || "FETCH_OR_PARSE_ERROR",
+          errorName: error.name || "Error",
+          errorMessage: error.message || String(error)
+        }, error);
         invalidateSample();
         emit("retrying", null, null);
         scheduleRetry();
@@ -158,6 +190,7 @@
         invalidateSample();
         clearSchedule();
         removeLifecycleListeners();
+        log("info", "verification succeeded; release confirmed", requestDetails(request));
         emit("unlocked", 0, formatRemaining(0));
         if (!unlockedNotified) {
           unlockedNotified = true;
@@ -172,22 +205,26 @@
       schedulePeriodicRefresh();
     }
 
-    function requestVerification() {
+    function requestVerification(reason = "unspecified") {
       if (disposed || state === "unlocked" || activeRequest) return;
       clearTimer("retry");
       clearTimer("countdown");
       emit("checking", remainingSeconds === 0 ? 0 : null, remainingSeconds === 0 ? formatRemaining(0) : null);
-      const request = { timeout: null, superseded: false, controller: null };
+      const request = { timeout: null, superseded: false, controller: null, reason, startedAt: monotonicNow(), responseStatus: undefined };
       activeRequest = request;
       if (!fetchTime) {
-        finishRequest(request, new Error("O serviço de hora não está disponível."));
+        const error = new Error("O serviço de hora não está disponível.");
+        error.code = "FETCH_UNAVAILABLE";
+        finishRequest(request, error);
         return;
       }
       if (AbortControllerClass) request.controller = new AbortControllerClass();
       request.timeout = schedule(() => {
         request.timedOut = true;
         if (request.controller) request.controller.abort();
-        finishRequest(request, new Error("A verificação da hora excedeu o tempo limite."));
+        const error = new Error("A verificação da hora excedeu o tempo limite.");
+        error.code = "TIMEOUT";
+        finishRequest(request, error);
       }, REQUEST_TIMEOUT_MS);
 
       let responsePromise;
@@ -199,17 +236,23 @@
           ...(request.controller ? { signal: request.controller.signal } : {})
         });
       } catch (error) {
-        finishRequest(request, error);
+        const fetchError = error instanceof Error ? error : new Error(String(error));
+        fetchError.code = fetchError.code || "FETCH_THROWN";
+        finishRequest(request, fetchError);
         return;
       }
+      log("debug", "verification started", requestDetails(request));
       Promise.resolve(responsePromise)
-        .then(parseExternalTime)
+        .then((response) => {
+          request.responseStatus = response && response.status;
+          return parseExternalTime(response);
+        })
         .then((externalMs) => finishRequest(request, null, externalMs), (error) => finishRequest(request, error));
     }
 
     function handleVisibilityChange() {
       if (isVisible()) {
-        refresh();
+        refresh("visibility");
       } else {
         clearTimer("countdown");
         clearTimer("periodic");
@@ -217,7 +260,7 @@
     }
 
     function handlePageShow() {
-      if (isVisible()) refresh();
+      if (isVisible()) refresh("pageshow");
     }
 
     function addLifecycleListeners() {
@@ -242,10 +285,10 @@
       if (disposed || started) return;
       started = true;
       addLifecycleListeners();
-      requestVerification();
+      requestVerification("initial");
     }
 
-    function refresh() {
+    function refresh(reason = "manual") {
       if (disposed || state === "unlocked") return;
       if (!started) {
         start();
@@ -253,7 +296,7 @@
       }
       if (activeRequest) return;
       clearTimer("retry");
-      requestVerification();
+      requestVerification(reason);
     }
 
     function dispose() {

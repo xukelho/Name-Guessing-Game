@@ -6,6 +6,8 @@ Antes de abrir o jogo, existe uma barreira de tempo. O desafio fica disponível 
 
 O jogo usa HTML, CSS e JavaScript simples. Não precisa de servidor de aplicações, contas, som, compilação, chaves ou dependências instaladas. A consulta externa tem um limite de 10 segundos; se falhar, o jogo permanece bloqueado e tenta novamente 5 segundos depois de a tentativa terminar. Também é possível usar o botão **Tentar novamente**. Sem internet ou sem acesso do navegador ao serviço de hora, não há abertura offline. Como o site é estático, o código e as respostas continuam visíveis para quem descarregar os ficheiros; a barreira é uma funcionalidade de apresentação, não um mecanismo de segredo.
 
+Quando uma verificação falha, a consola do navegador regista o motivo, a origem da página, o estado de rede, o acionador da tentativa, a duração e o estado HTTP quando existe resposta. Um `ERR_CONNECTION_RESET` sem estado HTTP indica que a ligação foi interrompida antes de o serviço responder; não é uma falha na leitura de `utc_datetime`.
+
 O progresso só fica guardado enquanto a página está aberta; ao recarregá-la, o jogo começa no nível 1 depois de uma nova verificação de hora.
 
 ## Executar localmente
