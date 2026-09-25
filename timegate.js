@@ -1,7 +1,7 @@
 (function (root) {
   "use strict";
 
-  const RELEASE_AT = "2026-09-25T13:15:00Z";
+  const RELEASE_AT = "2026-09-25T17:13:00Z";
   const RELEASE_AT_MS = Date.parse(RELEASE_AT);
   const TIME_ENDPOINT = "https://utctime.app/api/timezone/Etc/UTC";
   const REQUEST_TIMEOUT_MS = 10000;
